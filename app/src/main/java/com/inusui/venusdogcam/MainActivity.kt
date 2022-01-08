@@ -2,12 +2,14 @@ package com.inusui.venusdogcam
 
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
@@ -15,12 +17,17 @@ import androidx.core.content.ContextCompat
 import com.inusui.venusdogcam.databinding.ActivityMainBinding
 import java.io.File
 import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var imageCapture:ImageCapture? = null
     private lateinit var outputDirectory: File
+    private lateinit var cameraExecutor:ExecutorService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +35,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         outputDirectory = getoutputDirectory()
+        cameraExecutor = Executors.newSingleThreadExecutor()
 
         if(allPermissionGranted()){
             //Toast.makeText(this,"Tengo Permisos", Toast.LENGTH_SHORT).show()
@@ -57,8 +65,24 @@ class MainActivity : AppCompatActivity() {
     private fun takePhoto(){
         val imageCapture = imageCapture?: return
         val photoFile = File(
-            outputDirectory,
-        )
+            outputDirectory, SimpleDateFormat(Constants.FILE_NAME_FORMAT,
+                Locale.getDefault()).format(System.currentTimeMillis()) + ".jpg")
+        val outputOption = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        imageCapture.takePicture(outputOption, ContextCompat.getMainExecutor(this),
+        object :ImageCapture.OnImageSavedCallback{
+            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                val saveUri = Uri.fromFile(photoFile)
+                val msg = "Foto Guardada"
+                Toast.makeText(this@MainActivity, "$msg $saveUri", Toast.LENGTH_LONG).show()
+            }
+
+            override fun onError(exception: ImageCaptureException) {
+                Log.e(Constants.TAG,"onError: ${exception.message}", exception)
+
+            }
+
+        })
     }
 
     private fun startCamera(){
@@ -95,7 +119,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == Constants.REQUEST_CODE_PERMISSIONS){
 
             if (allPermissionGranted()){
-                //
+
                 startCamera()
             }else{
                 Toast.makeText(this,"No Tengo Permisos", Toast.LENGTH_SHORT).show()
@@ -105,10 +129,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    //Requiero los permisos!
     private fun allPermissionGranted() =
         Constants.REQUIRED_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(baseContext,it) == PackageManager.PERMISSION_GRANTED
         }
 
+    override fun onDestroy(){
+        super.onDestroy()
+        cameraExecutor.shutdown()
+    }
 }
