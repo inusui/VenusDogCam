@@ -2,6 +2,8 @@ package com.inusui.venusdogcam
 
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -28,6 +30,10 @@ class MainActivity : AppCompatActivity() {
     private var imageCapture:ImageCapture? = null
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor:ExecutorService
+    //play sounds
+    //private lateinit var btnToySoundPlay : Button
+    var mediaPlayer : MediaPlayer? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +56,28 @@ class MainActivity : AppCompatActivity() {
         binding.btnTakePhoto.setOnClickListener{
             takePhoto()
         }
+        binding.btnToySound.setOnClickListener{
+            playSound()
+        }
+
+    }
+
+    private fun playSound(){
+
+        val mediaPath = Uri.parse("android.resource://" + packageName + "/" +  R.raw.dogtoy)
+
+        mediaPlayer = MediaPlayer()
+        mediaPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC)
+
+        try {
+
+            mediaPlayer!!.setDataSource(applicationContext, mediaPath)
+            mediaPlayer!!.prepare()
+            mediaPlayer!!.start()
+        }catch (e:Exception){
+            Log.d(Constants.TAG, "Error al Reproducir el Sonido: ", e)
+        }
+        Toast.makeText(this,"Reproduciendo...",Toast.LENGTH_LONG).show()
 
     }
 

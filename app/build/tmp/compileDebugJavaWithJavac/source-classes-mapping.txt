@@ -1,0 +1,4 @@
+com/inusui/venusdogcam/BuildConfig.java
+ com.inusui.venusdogcam.BuildConfig
+com/inusui/venusdogcam/databinding/ActivityMainBinding.java
+ com.inusui.venusdogcam.databinding.ActivityMainBinding
