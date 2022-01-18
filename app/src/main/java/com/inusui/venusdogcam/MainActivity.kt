@@ -1,6 +1,7 @@
 package com.inusui.venusdogcam
 
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -103,6 +104,11 @@ class MainActivity : AppCompatActivity() {
                 val saveUri = Uri.fromFile(photoFile)
                 val msg = "Foto Guardada"
                 Toast.makeText(this@MainActivity, "$msg $saveUri", Toast.LENGTH_LONG).show()
+                Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).also { mediaScanIntent ->
+
+                    mediaScanIntent.data = Uri.fromFile(photoFile)
+                    sendBroadcast(mediaScanIntent)
+                }
             }
 
             override fun onError(exception: ImageCaptureException) {
@@ -112,6 +118,11 @@ class MainActivity : AppCompatActivity() {
 
         })
     }
+    /*
+    private fun galleryAddPic() {
+
+    }
+    */
 
     private fun startCamera(){
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
